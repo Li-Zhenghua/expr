@@ -1,29 +1,31 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <pthread.h>
+#include <sys/file.h>
+#include <semaphore.h>
 
-#define N 5
+#define N 10
 #define PN 3
-#define CN 4
+#define CN 2
 
 
-int cache_pool[N];
+int buf[N];
 
 pthread_t p_tid[PN];
 pthread_t c_tid[CN];
 
 sem_t empty_sem;
 sem_t full_sem;
-int in, out;
+int in, out,i;
 
 pthread_mutex_t mutex;
 
 void *init_p(void *arg)
 {
-    FILE *file = fopen("data.txt", 'r');
-    int temp;
+    int cnt = 0;
     while (1)
     {
-        // read data from file
+/*
         int lock = flock(fileno(file), LOCK_SH);
         if ((offset = fscanf(file, "%d", i)) != 0)
         {
@@ -31,30 +33,38 @@ void *init_p(void *arg)
             fseek(file, offset, SEEK_CUR);
         }
         int release = flock(fileno(file), LOCK_UN);
-        sem_wait(empty_sem);
+*/
+        sem_wait(&empty_sem);
         pthread_mutex_lock(&mutex);
         //critical region
-        cache_pool[in] = temp;
-        in = (in + 1) % N;
-        
+        buf[in] = rand();
+	printf("producer %d produce %d \n", (int)arg, buf[in]);
 
+        in = (in + 1) % N;
+
+    fflush(NULL);
         pthread_mutex_unlock(&mutex);
-        sem_post(empty_sem);
+        sem_post(&full_sem);
+	sleep(1);
+	
     }
 }
 void *init_c(void *arg)
 {
+    int temp;
     while (1)
     {
-        sem_wait(full_sem);
+        sem_wait(&full_sem);
         pthread_mutex_lock(&mutex);
         // critical region
-        temp = cache_pool[out];
-        out = (out + 1) % n;
-        printf("comsume %d", temp);
+        temp = buf[out];
+        printf("comsumer %d comsume %d \n", (int)arg, temp);
+        out = (out + 1) % N;
+    fflush(NULL);
 
         pthread_mutex_unlock(&mutex);
-        sem_post(full_sem);
+        sem_post(&empty_sem);
+	sleep(1);
     }
 }
 
@@ -62,14 +72,13 @@ int main()
 {
     sem_init(&empty_sem, 0, N);
     sem_init(&full_sem, 0, 0);
-
-
+    srand(time(0));
     pthread_mutex_init(&mutex, NULL);
 
     for (i = 0; i < PN; i++)
-        pthread_create(&p_tid[i], NULL, init_p, (void *)i);
+        pthread_create(&p_tid[i], NULL, init_p, (void*) i);
     for (i = 0; i < CN; i++)
-        pthread_create(&c_tid[i], NULL, init_c, (void *)i);
+        pthread_create(&c_tid[i], NULL, init_c, (void*) i);
 
 
     for (i = 0; i < PN; i++)
