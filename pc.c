@@ -18,25 +18,24 @@ sem_t full_sem;
 int in, out, i;
 
 pthread_mutex_t mutex;
+FILE* file;
+
 
 void *init_p(void *arg)
 {
-    int cnt = 0;
+    int temp = 0;
     while (1)
     {
-        /*
-        int lock = flock(fileno(file), LOCK_SH);
-        if ((offset = fscanf(file, "%d", i)) != 0)
-        {
-            temp = i;
-            fseek(file, offset, SEEK_CUR);
-        }
-        int release = flock(fileno(file), LOCK_UN);
-*/
         sem_wait(&empty_sem);
         pthread_mutex_lock(&mutex);
         //critical region
-        buf[in] = rand();
+	if ((fscanf(file, "%d", &temp) < 0 ))
+        {
+	    pthread_mutex_unlock(&mutex);
+            sem_post(&full_sem);
+            break;
+        }
+        buf[in] = temp;
         printf("producer %d produce %d \n", (int)arg, buf[in]);
 
         in = (in + 1) % N;
@@ -73,6 +72,8 @@ int main()
     srand(time(0));
     pthread_mutex_init(&mutex, NULL);
 
+    file = fopen("data.txt", "r");
+
     for (i = 0; i < PN; i++)
         pthread_create(&p_tid[i], NULL, init_p, (void *)i);
     for (i = 0; i < CN; i++)
@@ -82,6 +83,5 @@ int main()
         pthread_join(p_tid[i], NULL);
     for (i = 0; i < CN; i++)
         pthread_join(c_tid[i], NULL);
-
     return 0;
 }
