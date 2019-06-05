@@ -8,7 +8,6 @@
 #define PN 3
 #define CN 2
 
-
 int buf[N];
 
 pthread_t p_tid[PN];
@@ -16,7 +15,7 @@ pthread_t c_tid[CN];
 
 sem_t empty_sem;
 sem_t full_sem;
-int in, out,i;
+int in, out, i;
 
 pthread_mutex_t mutex;
 
@@ -25,7 +24,7 @@ void *init_p(void *arg)
     int cnt = 0;
     while (1)
     {
-/*
+        /*
         int lock = flock(fileno(file), LOCK_SH);
         if ((offset = fscanf(file, "%d", i)) != 0)
         {
@@ -38,15 +37,14 @@ void *init_p(void *arg)
         pthread_mutex_lock(&mutex);
         //critical region
         buf[in] = rand();
-	printf("producer %d produce %d \n", (int)arg, buf[in]);
+        printf("producer %d produce %d \n", (int)arg, buf[in]);
 
         in = (in + 1) % N;
 
-    fflush(NULL);
+        fflush(NULL);
         pthread_mutex_unlock(&mutex);
         sem_post(&full_sem);
-	sleep(1);
-	
+        sleep(1);
     }
 }
 void *init_c(void *arg)
@@ -60,11 +58,11 @@ void *init_c(void *arg)
         temp = buf[out];
         printf("comsumer %d comsume %d \n", (int)arg, temp);
         out = (out + 1) % N;
-    fflush(NULL);
+        fflush(NULL);
 
         pthread_mutex_unlock(&mutex);
         sem_post(&empty_sem);
-	sleep(1);
+        sleep(1);
     }
 }
 
@@ -76,10 +74,9 @@ int main()
     pthread_mutex_init(&mutex, NULL);
 
     for (i = 0; i < PN; i++)
-        pthread_create(&p_tid[i], NULL, init_p, (void*) i);
+        pthread_create(&p_tid[i], NULL, init_p, (void *)i);
     for (i = 0; i < CN; i++)
-        pthread_create(&c_tid[i], NULL, init_c, (void*) i);
-
+        pthread_create(&c_tid[i], NULL, init_c, (void *)i);
 
     for (i = 0; i < PN; i++)
         pthread_join(p_tid[i], NULL);

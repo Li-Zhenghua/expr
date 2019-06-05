@@ -3,13 +3,17 @@
 #define N 5
 
 #define LEFT (i + N - 1) % N
-#define RIGHT (i + 1) % N 
+#define RIGHT (i + 1) % N
 #define THINK_TIME 3
 #define EAT_TIME 2
 
-enum { THINKING, HUNGRY, EATING } state[N];
+enum
+{
+    THINKING,
+    HUNGRY,
+    EATING
+} state[N];
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER, s[N];
-
 
 int i;
 void try_getfork(int i)
@@ -46,10 +50,10 @@ void eat(int i)
     printf("thread %d is eating\n", i);
     sleep(EAT_TIME);
 }
-void * init_phi(void *arg)
+void *init_phi(void *arg)
 {
     int i = (int)arg;
-    for(;;)
+    for (;;)
     {
         think(i);
         take_forks(i);
@@ -67,4 +71,3 @@ int main()
         pthread_join(tid[i], NULL);
     return 0;
 }
-
